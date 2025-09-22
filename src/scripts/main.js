@@ -1,5 +1,6 @@
 'use strict';
 
+let firstListener, secondListener, thirdListener, forthListener, fifthListener;
 const body = document.querySelector('body');
 
 function createNotification(message, notificationStatus) {
@@ -22,55 +23,61 @@ const firstPromise = new Promise((resolve, reject) => {
     3000,
   );
 
-  document.addEventListener('click', () => {
-    resolve('First promise was resolved');
-    clearTimeout(timeout);
-  });
+  firstListener = document.addEventListener(
+    'click',
+    () => {
+      resolve('First promise was resolved');
+      clearTimeout(timeout);
+    },
+    { once: true },
+  );
 });
 
 firstPromise.then((value) => createNotification(value, 'success'));
-firstPromise.catch((error) => createNotification(error, 'error'));
+
+firstPromise.catch((error) => {
+  createNotification(error.message, 'error');
+  removeEventListener('click', firstListener);
+});
 
 const secondPromise = new Promise((resolve) => {
-  document.addEventListener('click', () => {
+  secondListener = document.addEventListener('click', () => {
     resolve('Second promise was resolved');
   });
 
-  document.addEventListener('contextmenu', () => {
+  thirdListener = document.addEventListener('contextmenu', () => {
     resolve('Second promise was resolved');
   });
 });
 
 secondPromise.then((value) => {
   createNotification(value, 'success');
-});
-
-secondPromise.catch((error) => {
-  createNotification(error, 'error');
+  removeEventListener('click', secondListener);
+  removeEventListener('contextmenu', thirdListener);
 });
 
 const waitForLeftClick = new Promise((resolve) => {
-  document.addEventListener('click', () => {
+  forthListener = document.addEventListener('click', () => {
     resolve();
   });
+
 });
 
 const waitForRightClick = new Promise((resolve) => {
-  document.addEventListener('contextmenu', () => {
+  fifthListener = document.addEventListener('contextmenu', () => {
     resolve();
   });
+
 });
 
 const thirdPromise = new Promise((resolve) => {
   Promise.all([waitForLeftClick, waitForRightClick]).then((results) => {
     resolve('Third promise was resolved');
+    removeEventListener('click', forthListener);
+    removeEventListener('contextmenu', fifthListener);
   });
 });
 
 thirdPromise.then((value) => {
   createNotification(value, 'success');
-});
-
-thirdPromise.catch((error) => {
-  createNotification(error, 'error');
 });
