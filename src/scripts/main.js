@@ -16,35 +16,27 @@ function createNotification(message, notificationStatus) {
   body.appendChild(div);
 }
 
-const leftClickPromise = new Promise((resolve) => {
-  document.addEventListener('click', () => {
-    resolve();
-  });
-});
-
-const rightClickPromise = new Promise((resolve) => {
-  document.addEventListener('contextmenu', () => {
-    resolve();
-  });
-});
-
 const firstPromise = new Promise((resolve, reject) => {
-  leftClickPromise.then(() => {
-    resolve('First promise was resolved');
-  });
+  const timeout = setTimeout(
+    () => reject(Error('First promise was rejected')),
+    3000,
+  );
 
-  setTimeout(() => reject(new Error('First promise was rejected')), 3000);
+  document.addEventListener('click', () => {
+    resolve('First promise was resolved');
+    clearTimeout(timeout);
+  });
 });
 
 firstPromise.then((value) => createNotification(value, 'success'));
 firstPromise.catch((error) => createNotification(error, 'error'));
 
 const secondPromise = new Promise((resolve) => {
-  leftClickPromise.then(() => {
+  document.addEventListener('click', () => {
     resolve('Second promise was resolved');
   });
 
-  rightClickPromise.then(() => {
+  document.addEventListener('contextmenu', () => {
     resolve('Second promise was resolved');
   });
 });
@@ -57,11 +49,21 @@ secondPromise.catch((error) => {
   createNotification(error, 'error');
 });
 
+const waitForLeftClick = new Promise((resolve) => {
+  document.addEventListener('click', () => {
+    resolve();
+  });
+});
+
+const waitForRightClick = new Promise((resolve) => {
+  document.addEventListener('contextmenu', () => {
+    resolve();
+  });
+});
+
 const thirdPromise = new Promise((resolve) => {
-  rightClickPromise.then(() => {
-    leftClickPromise.then(() => {
-      resolve('Third promise was resolved');
-    });
+  Promise.all([waitForLeftClick, waitForRightClick]).then((results) => {
+    resolve('Third promise was resolved');
   });
 });
 
